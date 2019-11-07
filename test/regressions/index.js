@@ -2,14 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import vrtest from 'vrtest/client';
 import webfontloader from 'webfontloader';
-import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/styles';
 import TestViewer from './TestViewer';
 
-const theme = createMuiTheme({
-  typography: {
-    useNextVariants: true,
-  },
-});
+const theme = createMuiTheme();
 
 // Get all the tests specifically written for preventing regressions.
 const requireRegression = require.context('./tests', true, /js$/);
@@ -29,38 +26,67 @@ const regressions = requireRegression.keys().reduce((res, path) => {
 
 const blacklistSuite = [
   // Flaky
-  'docs-demos-progress',
-  'docs-discover-more-team', // GitHub images
+  'docs-components-progress',
+
+  // Internal dependencies
+  'docs-discover-more-languages',
 
   // Needs interaction
-  'docs-demos-dialogs',
-  'docs-demos-menus',
-  'docs-demos-tooltips',
-  'docs-utils-transitions',
+  'docs-components-click-away-listener',
+  'docs-components-dialogs',
+  'docs-components-menus',
+  'docs-components-tooltips',
+  'docs-components-transitions',
 
-  // Less important
-  'docs-layouts',
-  'docs-getting-started-page-layout-examples-album',
-  'docs-getting-started-page-layout-examples-blog',
-  'docs-getting-started-page-layout-examples-checkout',
-  'docs-getting-started-page-layout-examples-dashboard',
-  'docs-getting-started-page-layout-examples-pricing',
-  'docs-getting-started-page-layout-examples-sign-in',
+  // Documentation extension
+  'docs-getting-started-templates',
+  'docs-customization-default-theme',
+
+  // Image load issue
+  'docs-components-skeleton',
+  'docs-discover-more-team',
+  'docs-getting-started-templates-album',
+  'docs-getting-started-templates-blog',
+  'docs-getting-started-templates-sign-in-side',
 
   // Useless
   'docs-', // Home
   'docs-discover-more-showcase',
   'docs-guides',
-  'docs-premium-themes',
-  'docs-style-color', // non important demo
   'docs-versions',
+  'docs-layouts',
+  'docs-customization-color',
 ];
 
 const blacklistFilename = [
-  'docs-demos-grid-list/tileData.png', // no component
-  'docs-demos-steppers/SwipeableTextMobileStepper.png', // external img
-  'docs-demos-steppers/TextMobileStepper.png', // external img
+  'docs-components-grid-list/tileData.png', // no component
+  'docs-css-in-js-basics/StressTest.png', // strange bug no time for it
+  'docs-components-steppers/SwipeableTextMobileStepper.png', // external img
+  'docs-components-steppers/TextMobileStepper.png', // external img
   'docs-getting-started-usage/Usage.png', // codesandbox iframe
+  'docs-customization-typography/ResponsiveFontSizesChart.png', // Chart
+  'docs-components-material-icons/synonyms.png', // Not a component
+
+  // Already tested once assembled
+  'docs-getting-started-templates-dashboard/Chart.png',
+  'docs-getting-started-templates-dashboard/Deposits.png',
+  'docs-getting-started-templates-dashboard/Orders.png',
+  'docs-getting-started-templates-dashboard/Title.png',
+  'docs-getting-started-templates-checkout/AddressForm.png',
+  'docs-getting-started-templates-checkout/PaymentForm.png',
+  'docs-getting-started-templates-checkout/Review.png',
+
+  // Flaky
+  'docs-components-grid-list/ImageGridList.png',
+  'docs-components-icons/FontAwesome.png',
+  'docs-components-tree-view/CustomizedTreeView.png',
+
+  // Redux isolation
+  'docs-components-chips/ChipsPlayground.png',
+  'docs-components-popover/AnchorPlayground.png',
+  'docs-components-popper/ScrollPlayground.png',
+  'docs-components-grid/InteractiveGrid.png',
+  'docs-customization-density/DensityTool.png',
 ];
 
 // Also use some of the demos to avoid code duplication.
@@ -73,14 +99,24 @@ const demos = requireDemos.keys().reduce((res, path) => {
     .reverse();
   const suite = `docs-${suiteArray.reverse().join('-')}`;
 
-  if (!blacklistSuite.includes(suite) && !blacklistFilename.includes(`${suite}/${name}.png`)) {
-    res.push({
-      path,
-      suite,
-      name,
-      case: requireDemos(path).default,
-    });
+  if (blacklistSuite.includes(suite)) {
+    return res;
   }
+
+  if (blacklistFilename.includes(`${suite}/${name}.png`)) {
+    return res;
+  }
+
+  if (/^docs-premium-themes(.*)/.test(suite)) {
+    return res;
+  }
+
+  res.push({
+    path,
+    suite,
+    name,
+    case: requireDemos(path).default,
+  });
 
   return res;
 }, []);
@@ -93,7 +129,7 @@ vrtest.before(() => {
     document.body.appendChild(rootEl);
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     webfontloader.load({
       google: {
         families: ['Roboto:300,400,500', 'Material+Icons'],
@@ -104,10 +140,10 @@ vrtest.before(() => {
       },
       timeout: 20000,
       active: () => {
-        resolve('active');
+        resolve('webfontloader: active');
       },
       inactive: () => {
-        resolve('inactive');
+        reject(new Error('webfontloader: inactive'));
       },
     });
   });
@@ -129,11 +165,11 @@ tests.forEach(test => {
 
   suite.createTest(test.name, () => {
     ReactDOM.render(
-      <MuiThemeProvider theme={theme}>
+      <ThemeProvider theme={theme}>
         <TestViewer>
           <TestCase />
         </TestViewer>
-      </MuiThemeProvider>,
+      </ThemeProvider>,
       rootEl,
     );
   });

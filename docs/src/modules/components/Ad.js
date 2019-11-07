@@ -1,48 +1,42 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Tooltip from '@material-ui/core/Tooltip';
 import Paper from '@material-ui/core/Paper';
-import CodeFund from 'docs/src/modules/components/CodeFund';
-import Carbon from 'docs/src/modules/components/Carbon';
+import AdCodeFund from 'docs/src/modules/components/AdCodeFund';
+import AdCarbon from 'docs/src/modules/components/AdCarbon';
+import AdInHouse from 'docs/src/modules/components/AdInHouse';
 
 const styles = theme => ({
   root: {
     position: 'relative',
-    minHeight: 116,
-    maxWidth: 350,
+    minHeight: 124,
+    maxWidth: 345,
     display: 'block',
-    marginTop: theme.spacing.unit * 4,
-    marginBottom: theme.spacing.unit * 3,
-  },
-  info: {
-    ...theme.typography.caption,
-    position: 'absolute',
-    padding: theme.spacing.unit,
-    cursor: 'default',
-    bottom: 0,
-    right: 0,
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing(3),
   },
   paper: {
-    padding: theme.spacing.unit,
+    padding: theme.spacing(1.5),
+    border: `2px solid ${theme.palette.primary.main}`,
+    backgroundColor: theme.palette.background.level2,
     display: 'block',
   },
 });
 
-function getAdblock(classes) {
+function getAdblock(classes, t) {
   return (
     <Paper component="span" elevation={0} className={classes.paper}>
-      <Typography component="span" gutterBottom>
-        Like Material-UI?
+      <Typography variant="body2" display="block" component="span" gutterBottom>
+        {t('likeMui')}
       </Typography>
-      <Typography component="span" gutterBottom>
-        {`If you don't mind tech-related ads, and want to support Open Source,
-            please whitelist Material-UI in your ad blocker.`}
+      <Typography variant="body2" display="block" component="span" gutterBottom>
+        {t('adblock')}
       </Typography>
-      <Typography component="span">
-        Thank you!{' '}
-        <span role="img" aria-label="Love">
+      <Typography variant="body2" display="block" component="span" gutterBottom>
+        {t('thanks')}{' '}
+        <span role="img" aria-label={t('emojiLove')}>
           ❤️
         </span>
       </Typography>
@@ -50,70 +44,103 @@ function getAdblock(classes) {
   );
 }
 
-class Ad extends React.Component {
-  random = Math.random();
+const disable = process.env.NODE_ENV !== 'production' && process.env.ENABLE_AD !== 'true';
 
-  state = {
-    disable: process.env.NODE_ENV !== 'production',
-    adblock: null,
-  };
+const inHouses = [
+  {
+    name: 'scaffoldhub',
+    link: 'https://scaffoldhub.io/?partner=1',
+    img: '/static/in-house/scaffoldhub.png',
+    description: '<b>ScaffoldHub</b> - Automate building your full-stack Material-UI web-app.',
+  },
+  {
+    name: 'themes',
+    link: 'https://themes.material-ui.com/',
+    img: '/static/in-house/themes.png',
+    description:
+      '<b>Premium Themes</b><br />Kickstart your application development with a ready-made theme.',
+  },
+];
 
-  componentDidMount() {
-    if (this.state.disable) {
-      return;
-    }
-    this.checkAdblock();
-  }
+function Ad(props) {
+  const { classes } = props;
+  const { current: random } = React.useRef(Math.random());
+  const t = useSelector(state => state.options.t);
 
-  componentWillUnmount() {
-    clearTimeout(this.timerAdblock);
-  }
+  const timerAdblock = React.useRef();
+  const [adblock, setAdblock] = React.useState(null);
+  const [carbonOut, setCarbonOut] = React.useState(null);
 
-  checkAdblock = (attempt = 1) => {
+  const checkAdblock = React.useCallback((attempt = 1) => {
     if (document.querySelector('.cf-wrapper') || document.querySelector('#carbonads')) {
-      this.setState({
-        adblock: false,
-      });
+      if (
+        document.querySelector('#carbonads a') &&
+        document.querySelector('#carbonads a').getAttribute('href') ===
+          'https://material-ui-next.com/discover-more/backers'
+      ) {
+        setCarbonOut(true);
+      }
+
+      setAdblock(false);
       return;
     }
 
     if (attempt < 30) {
-      this.timerAdblock = setTimeout(() => {
-        this.checkAdblock(attempt + 1);
+      timerAdblock.current = setTimeout(() => {
+        checkAdblock(attempt + 1);
       }, 500);
     }
 
-    if (attempt > 6 && this.state.adblock !== true) {
-      this.setState({
-        adblock: true,
-      });
+    if (attempt > 6) {
+      setAdblock(true);
     }
-  };
+  }, []);
 
-  render() {
-    const { classes } = this.props;
-    const { adblock, disable } = this.state;
-
+  React.useEffect(() => {
     if (disable) {
-      return <span className={classes.root}>{getAdblock(classes)}</span>;
+      return undefined;
     }
+    checkAdblock();
 
-    return (
-      <span className={classes.root}>
-        {this.random >= 0.75 ? <CodeFund /> : <Carbon />}
-        {adblock === true ? getAdblock(classes) : null}
-        {adblock === false ? (
-          <Tooltip
-            id="ad-info"
-            title="This ad is designed to support Open Source."
-            placement="left"
-          >
-            <span className={classes.info}>i</span>
-          </Tooltip>
-        ) : null}
-      </span>
-    );
+    return () => {
+      clearTimeout(timerAdblock.current);
+    };
+  }, [checkAdblock]);
+
+  let children;
+  let minHeight;
+
+  // Hide the content to google bot.
+  if (/Googlebot/.test(navigator.userAgent) || disable) {
+    children = <span />;
   }
+
+  if (adblock) {
+    minHeight = 'auto';
+
+    if (random >= 0.8) {
+      children = getAdblock(classes, t);
+    } else {
+      children = <AdInHouse ad={inHouses[Math.round((inHouses.length - 1) * random)]} />;
+    }
+  }
+
+  if (!children) {
+    if (random >= 0.6) {
+      children = <AdCodeFund />;
+    } else if (!carbonOut) {
+      children = <AdCarbon />;
+    } else {
+      children = <AdInHouse ad={inHouses[Math.round((inHouses.length - 1) * random)]} />;
+      minHeight = 'auto';
+    }
+  }
+
+  return (
+    <span className={classes.root} style={{ minHeight }}>
+      {children}
+    </span>
+  );
 }
 
 Ad.propTypes = {

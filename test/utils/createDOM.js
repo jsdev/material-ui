@@ -2,7 +2,7 @@ const { JSDOM } = require('jsdom');
 const Node = require('jsdom/lib/jsdom/living/node-document-position');
 
 // We can use jsdom-global at some point if maintaining these lists is a burden.
-const whitelist = ['HTMLElement', 'Performance'];
+const whitelist = ['Element', 'HTMLElement', 'HTMLInputElement', 'Performance'];
 const blacklist = ['sessionStorage', 'localStorage'];
 
 function createDOM() {
@@ -19,6 +19,34 @@ function createDOM() {
       ownerDocument: document,
     },
   });
+  // Not yet supported: https://github.com/jsdom/jsdom/issues/2152
+  class Touch {
+    constructor(instance) {
+      this.instance = instance;
+    }
+
+    get identifier() {
+      return this.instance.identifier;
+    }
+
+    get pageX() {
+      return this.instance.pageX;
+    }
+
+    get pageY() {
+      return this.instance.pageY;
+    }
+
+    get clientX() {
+      return this.instance.clientX;
+    }
+
+    get clientY() {
+      return this.instance.clientY;
+    }
+  }
+  global.window.Touch = Touch;
+
   global.navigator = {
     userAgent: 'node.js',
   };
@@ -31,6 +59,10 @@ function createDOM() {
         global[key] = dom.window[key];
       }
     });
+
+  // required for wait-for-expect
+  // not added by jsdom by default
+  window.Date = global.Date;
 }
 
 module.exports = createDOM;

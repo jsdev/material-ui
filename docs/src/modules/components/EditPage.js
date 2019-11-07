@@ -1,35 +1,41 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from 'react-redux';
+import { Router, useRouter } from 'next/router';
 import Button from '@material-ui/core/Button';
-import PageContext from 'docs/src/modules/components/PageContext';
+import { pathnameToLanguage } from 'docs/src/modules/utils/helpers';
 
-function EditPage(props) {
-  const { markdownLocation, sourceCodeRootUrl } = props;
+const SOURCE_CODE_ROOT_URL = 'https://github.com/mui-org/material-ui/edit/master';
+
+export default function EditPage(props) {
+  const { markdownLocation } = props;
+  const t = useSelector(state => state.options.t);
+  const userLanguage = useSelector(state => state.options.userLanguage);
+  const router = useRouter();
+  const { canonical } = pathnameToLanguage(Router._rewriteUrlForNextExport(router.asPath));
 
   return (
-    <PageContext.Consumer>
-      {({ userLanguage }) => {
-        if (userLanguage === 'zh') {
-          return (
-            <Button component="a" href="https://translate.material-ui.com/project/material-ui-docs">
-              {'将此页面翻译成中文'}
-            </Button>
-          );
+    <Button
+      component={userLanguage === 'en' ? 'a' : 'button'}
+      onClick={() => {
+        if (userLanguage === 'en') {
+          return;
         }
-
-        return (
-          <Button component="a" href={`${sourceCodeRootUrl}${markdownLocation}`}>
-            {'Edit this page'}
-          </Button>
-        );
+        window.location = `/aa${canonical}`;
       }}
-    </PageContext.Consumer>
+      href={userLanguage === 'en' ? `${SOURCE_CODE_ROOT_URL}${markdownLocation}` : null}
+      target="_blank"
+      rel="noopener nofollow"
+      size="small"
+      data-ga-event-category={userLanguage === 'en' ? undefined : 'l10n'}
+      data-ga-event-action={userLanguage === 'en' ? undefined : 'edit-button'}
+      data-ga-event-label={userLanguage === 'en' ? undefined : userLanguage}
+    >
+      {t('editPage')}
+    </Button>
   );
 }
 
 EditPage.propTypes = {
   markdownLocation: PropTypes.string.isRequired,
-  sourceCodeRootUrl: PropTypes.string.isRequired,
 };
-
-export default EditPage;

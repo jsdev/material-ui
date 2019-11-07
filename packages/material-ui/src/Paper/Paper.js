@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
-import warning from 'warning';
+import clsx from 'clsx';
 import withStyles from '../styles/withStyles';
+import useTheme from '../styles/useTheme';
 
 export const styles = theme => {
   const elevations = {};
@@ -16,6 +16,8 @@ export const styles = theme => {
     /* Styles applied to the root element. */
     root: {
       backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      transition: theme.transitions.create('box-shadow'),
     },
     /* Styles applied to the root element if `square={false}`. */
     rounded: {
@@ -25,32 +27,39 @@ export const styles = theme => {
   };
 };
 
-function Paper(props) {
+const Paper = React.forwardRef(function Paper(props, ref) {
   const {
     classes,
-    className: classNameProp,
-    component: Component,
-    square,
-    elevation,
+    className,
+    component: Component = 'div',
+    square = false,
+    elevation = 1,
     ...other
   } = props;
 
-  warning(
-    elevation >= 0 && elevation < 25,
-    `Material-UI: this elevation \`${elevation}\` is not implemented.`,
-  );
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useTheme();
+    if (!theme.shadows[elevation]) {
+      console.error(`Material-UI: this elevation \`${elevation}\` is not implemented.`);
+    }
+  }
 
-  const className = classNames(
-    classes.root,
-    classes[`elevation${elevation}`],
-    {
-      [classes.rounded]: !square,
-    },
-    classNameProp,
+  return (
+    <Component
+      className={clsx(
+        classes.root,
+        classes[`elevation${elevation}`],
+        {
+          [classes.rounded]: !square,
+        },
+        className,
+      )}
+      ref={ref}
+      {...other}
+    />
   );
-
-  return <Component className={className} {...other} />;
-}
+});
 
 Paper.propTypes = {
   /**
@@ -59,7 +68,7 @@ Paper.propTypes = {
   children: PropTypes.node,
   /**
    * Override or extend the styles applied to the component.
-   * See [CSS API](#css-api) below for more details.
+   * See [CSS API](#css) below for more details.
    */
   classes: PropTypes.object.isRequired,
   /**
@@ -70,22 +79,16 @@ Paper.propTypes = {
    * The component used for the root node.
    * Either a string to use a DOM element or a component.
    */
-  component: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.object]),
+  component: PropTypes.elementType,
   /**
    * Shadow depth, corresponds to `dp` in the spec.
-   * It's accepting values between 0 and 24 inclusive.
+   * It accepts values between 0 and 24 inclusive.
    */
   elevation: PropTypes.number,
   /**
    * If `true`, rounded corners are disabled.
    */
   square: PropTypes.bool,
-};
-
-Paper.defaultProps = {
-  component: 'div',
-  elevation: 2,
-  square: false,
 };
 
 export default withStyles(styles, { name: 'MuiPaper' })(Paper);

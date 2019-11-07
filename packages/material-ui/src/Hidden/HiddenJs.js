@@ -1,13 +1,14 @@
 import PropTypes from 'prop-types';
-import { keys as breakpointKeys } from '../styles/createBreakpoints';
-import withWidth, { isWidthDown, isWidthUp } from '../withWidth';
 import { exactProp } from '@material-ui/utils';
+import withWidth, { isWidthDown, isWidthUp } from '../withWidth';
+import useTheme from '../styles/useTheme';
 
 /**
  * @ignore - internal component.
  */
 function HiddenJs(props) {
   const { children, only, width } = props;
+  const theme = useTheme();
 
   let visible = true;
 
@@ -29,8 +30,8 @@ function HiddenJs(props) {
   // Allow `only` to be combined with other props. If already hidden, no need to check others.
   if (visible) {
     // determine visibility based on the smallest size up
-    for (let i = 0; i < breakpointKeys.length; i += 1) {
-      const breakpoint = breakpointKeys[i];
+    for (let i = 0; i < theme.breakpoints.keys.length; i += 1) {
+      const breakpoint = theme.breakpoints.keys[i];
       const breakpointUp = props[`${breakpoint}Up`];
       const breakpointDown = props[`${breakpoint}Down`];
       if (
@@ -60,16 +61,16 @@ HiddenJs.propTypes = {
    */
   className: PropTypes.string,
   /**
-   * Specify which implementation to use.  'js' is the default, 'css' works better for server
-   * side rendering.
+   * Specify which implementation to use.  'js' is the default, 'css' works better for
+   * server-side rendering.
    */
   implementation: PropTypes.oneOf(['js', 'css']),
   /**
-   * You can use this property when choosing the `js` implementation with server side rendering.
+   * You can use this prop when choosing the `js` implementation with server-side rendering.
    *
    * As `window.innerWidth` is unavailable on the server,
-   * we default to rendering an empty componenent during the first mount.
-   * In some situation you might want to use an heristic to approximate
+   * we default to rendering an empty component during the first mount.
+   * You might want to use an heuristic to approximate
    * the screen width of the client browser screen width.
    *
    * For instance, you could be using the user-agent or the client-hints.
@@ -130,6 +131,8 @@ HiddenJs.propTypes = {
   xsUp: PropTypes.bool,
 };
 
-HiddenJs.propTypes = exactProp(HiddenJs.propTypes);
+if (process.env.NODE_ENV !== 'production') {
+  HiddenJs.propTypes = exactProp(HiddenJs.propTypes);
+}
 
 export default withWidth()(HiddenJs);

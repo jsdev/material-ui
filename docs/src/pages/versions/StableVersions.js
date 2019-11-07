@@ -1,5 +1,3 @@
-/* eslint-disable react/no-did-mount-set-state */
-
 import 'isomorphic-fetch';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -15,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import Link from 'docs/src/modules/components/Link';
 
 const GITHUB_RELEASE_BASE_URL = 'https://github.com/mui-org/material-ui/releases/tag/';
+const FILTERED_BRANCHES = ['latest', 'staging', 'l10n', 'next'];
 
 const styles = {
   root: {
@@ -40,84 +39,73 @@ async function getBranches() {
   return cacheBranches;
 }
 
-class StableVersions extends React.Component {
-  state = {
-    docs: [],
-  };
+function StableVersions(props) {
+  const { classes } = props;
+  const [docs, setDocs] = React.useState([]);
 
-  async componentDidMount() {
-    const branches = await getBranches();
-    let docs = branches.map(n => n.name);
-    docs = docs.filter(version => version !== 'latest');
-    docs = docs.map(version => ({
-      version,
-      // Replace dot with dashes for Netlify branch subdomains
-      url: `https://${version.replace(/\./g, '-')}.material-ui.com`,
-    }));
-    // Current version.
-    docs.push({
-      version: `v${process.env.LIB_VERSION}`,
-      url: document.location.origin,
-    });
-    // Legacy documentation.
-    docs.push({
-      version: 'v0.20.1',
-      url: 'https://v0.material-ui.com',
-    });
-    docs = orderBy(docs, 'version', 'desc');
-    docs = sortedUniqBy(docs, 'version');
-    // The latest version is always using the naked domain.
-    docs[0].url = 'https://material-ui.com';
-    this.setState({ docs });
-  }
+  React.useEffect(() => {
+    (async () => {
+      const branches = await getBranches();
+      let newDocs = branches.map(n => n.name);
+      newDocs = newDocs.filter(value => FILTERED_BRANCHES.indexOf(value) === -1);
+      newDocs = newDocs.map(version => ({
+        version,
+        // Replace dot with dashes for Netlify branch subdomains
+        url: `https://${version.replace(/\./g, '-')}.material-ui.com`,
+      }));
+      // Current version.
+      newDocs.push({
+        version: `v${process.env.LIB_VERSION}`,
+        url: document.location.origin,
+      });
+      // Legacy documentation.
+      newDocs.push({
+        version: 'v0',
+        url: 'https://v0.material-ui.com',
+      });
+      newDocs = orderBy(newDocs, 'version', 'desc');
+      newDocs = sortedUniqBy(newDocs, 'version');
+      // The latest version is always using the naked domain.
+      newDocs[0].url = 'https://material-ui.com';
+      setDocs(newDocs);
+    })();
+  }, []);
 
-  render() {
-    const { classes } = this.props;
-    const { docs } = this.state;
-
-    return (
-      <Paper className={classes.root}>
-        <Table>
-          <TableBody>
-            {docs.map(doc => {
-              return (
-                <TableRow key={doc.version}>
-                  <TableCell padding="dense">
-                    <Typography>
-                      {doc.version}
-                      {doc.version === `v${process.env.LIB_VERSION}` ? ' ✓' : ''}
-                    </Typography>
-                  </TableCell>
-                  <TableCell padding="dense">
-                    <Typography
-                      component={props2 => (
-                        <Link {...props2} variant="secondary" rel="nofollow" href={doc.url} />
-                      )}
-                    >
-                      Documentation
-                    </Typography>
-                  </TableCell>
-                  <TableCell padding="dense">
-                    <Typography
-                      component={props2 => (
-                        <Link
-                          {...props2}
-                          variant="secondary"
-                          href={`${GITHUB_RELEASE_BASE_URL}${doc.version}`}
-                        />
-                      )}
-                    >
-                      Release notes
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Paper>
-    );
-  }
+  return (
+    <Paper className={classes.root}>
+      <Table size="small">
+        <TableBody>
+          {docs.map(doc => (
+            <TableRow key={doc.version}>
+              <TableCell>
+                <Typography variant="body2">
+                  {doc.version}
+                  {doc.version === `v${process.env.LIB_VERSION}` ? ' ✓' : ''}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Link variant="body2" color="secondary" rel="nofollow" href={doc.url}>
+                  Documentation
+                </Link>
+              </TableCell>
+              <TableCell>
+                {doc.version.length === 6 ? (
+                  <Link
+                    variant="body2"
+                    color="secondary"
+                    rel="nofollow"
+                    href={`${GITHUB_RELEASE_BASE_URL}${doc.version}`}
+                  >
+                    Release notes
+                  </Link>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
+  );
 }
 
 StableVersions.propTypes = {

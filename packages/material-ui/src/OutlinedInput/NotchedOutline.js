@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
-import { withStyles } from '../styles';
-import { capitalize } from '../utils/helpers';
+import clsx from 'clsx';
+import withStyles from '../styles/withStyles';
+import useTheme from '../styles/useTheme';
+import capitalize from '../utils/capitalize';
 
 export const styles = theme => {
   const align = theme.direction === 'rtl' ? 'right' : 'left';
@@ -18,7 +19,7 @@ export const styles = theme => {
       margin: 0,
       padding: 0,
       pointerEvents: 'none',
-      borderRadius: theme.shape.borderRadius,
+      borderRadius: 'inherit',
       borderStyle: 'solid',
       borderWidth: 1,
       // Match the Input Label
@@ -31,7 +32,7 @@ export const styles = theme => {
     legend: {
       textAlign: 'left',
       padding: 0,
-      lineHeight: '10px',
+      lineHeight: '11px',
       transition: theme.transitions.create('width', {
         duration: theme.transitions.duration.shorter,
         easing: theme.transitions.easing.easeOut,
@@ -43,7 +44,7 @@ export const styles = theme => {
 /**
  * @ignore - internal component.
  */
-function NotchedOutline(props) {
+const NotchedOutline = React.forwardRef(function NotchedOutline(props, ref) {
   const {
     children,
     classes,
@@ -51,10 +52,9 @@ function NotchedOutline(props) {
     labelWidth: labelWidthProp,
     notched,
     style,
-    theme,
     ...other
   } = props;
-
+  const theme = useTheme();
   const align = theme.direction === 'rtl' ? 'right' : 'left';
   const labelWidth = labelWidthProp > 0 ? labelWidthProp * 0.75 + 8 : 0;
 
@@ -65,7 +65,8 @@ function NotchedOutline(props) {
         [`padding${capitalize(align)}`]: 8 + (notched ? 0 : labelWidth / 2),
         ...style,
       }}
-      className={classNames(classes.root, className)}
+      className={clsx(classes.root, className)}
+      ref={ref}
       {...other}
     >
       <legend
@@ -83,12 +84,16 @@ function NotchedOutline(props) {
       </legend>
     </fieldset>
   );
-}
+});
 
 NotchedOutline.propTypes = {
   /**
+   * The content of the component.
+   */
+  children: PropTypes.node,
+  /**
    * Override or extend the styles applied to the component.
-   * See [CSS API](#css-api) below for more details.
+   * See [CSS API](#css) below for more details.
    */
   classes: PropTypes.object,
   /**
@@ -96,7 +101,7 @@ NotchedOutline.propTypes = {
    */
   className: PropTypes.string,
   /**
-   * The width of the legend.
+   * The width of the label.
    */
   labelWidth: PropTypes.number.isRequired,
   /**
@@ -107,12 +112,6 @@ NotchedOutline.propTypes = {
    * @ignore
    */
   style: PropTypes.object,
-  /**
-   * @ignore
-   */
-  theme: PropTypes.object,
 };
 
-export default withStyles(styles, { name: 'MuiPrivateNotchedOutline', withTheme: true })(
-  NotchedOutline,
-);
+export default withStyles(styles, { name: 'PrivateNotchedOutline' })(NotchedOutline);

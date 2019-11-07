@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { StandardProps } from '..';
 import { TransitionProps } from '../transitions/transition';
+import { PopperProps } from '../Popper/Popper';
 
 export interface TooltipProps
   extends StandardProps<React.HTMLAttributes<HTMLDivElement>, TooltipClassKey, 'title'> {
-  children: React.ReactElement<any>;
+  children: React.ReactElement;
   disableFocusListener?: boolean;
   disableHoverListener?: boolean;
   disableTouchListener?: boolean;
@@ -30,14 +31,15 @@ export interface TooltipProps
     | 'top-end'
     | 'top-start'
     | 'top';
-  PopperProps?: object;
+  PopperProps?: Partial<PopperProps>;
   title: React.ReactNode;
-  TransitionComponent?: React.ReactType;
+  TransitionComponent?: React.ComponentType<TransitionProps>;
   TransitionProps?: TransitionProps;
 }
 
 export type TooltipClassKey =
   | 'popper'
+  | 'popperInteractive'
   | 'tooltip'
   | 'touch'
   | 'tooltipPlacementLeft'

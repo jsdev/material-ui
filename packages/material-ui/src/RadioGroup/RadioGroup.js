@@ -1,82 +1,89 @@
-// @inheritedComponent FormGroup
-
 import React from 'react';
 import PropTypes from 'prop-types';
-import warning from 'warning';
 import FormGroup from '../FormGroup';
-import { createChainedFunction, find } from '../utils/helpers';
+import useForkRef from '../utils/useForkRef';
+import RadioGroupContext from './RadioGroupContext';
 
-class RadioGroup extends React.Component {
-  radios = [];
+const RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
+  const { actions, children, name, value: valueProp, onChange, ...other } = props;
+  const rootRef = React.useRef(null);
+  const { current: isControlled } = React.useRef(valueProp != null);
+  const [valueState, setValue] = React.useState(() => {
+    return !isControlled ? props.defaultValue : null;
+  });
 
-  focus = () => {
-    if (!this.radios || !this.radios.length) {
-      return;
-    }
+  React.useImperativeHandle(
+    actions,
+    () => ({
+      focus: () => {
+        let input = rootRef.current.querySelector('input:not(:disabled):checked');
 
-    const focusRadios = this.radios.filter(n => !n.disabled);
+        if (!input) {
+          input = rootRef.current.querySelector('input:not(:disabled)');
+        }
 
-    if (!focusRadios.length) {
-      return;
-    }
+        if (input) {
+          input.focus();
+        }
+      },
+    }),
+    [],
+  );
 
-    const selectedRadio = find(focusRadios, n => n.checked);
-
-    if (selectedRadio) {
-      selectedRadio.focus();
-      return;
-    }
-
-    focusRadios[0].focus();
-  };
-
-  handleRadioChange = (event, checked) => {
-    if (checked && this.props.onChange) {
-      this.props.onChange(event, event.target.value);
-    }
-  };
-
-  render() {
-    const { children, name, value, onChange, ...other } = this.props;
-
-    this.radios = [];
-
-    return (
-      <FormGroup role="radiogroup" {...other}>
-        {React.Children.map(children, child => {
-          if (!React.isValidElement(child)) {
-            return null;
-          }
-
-          warning(
-            child.type !== React.Fragment,
-            [
-              "Material-UI: the RadioGroup component doesn't accept a Fragment as a child.",
-              'Consider providing an array instead.',
-            ].join('\n'),
-          );
-
-          return React.cloneElement(child, {
-            name,
-            inputRef: node => {
-              if (node) {
-                this.radios.push(node);
-              }
-            },
-            checked: value === child.props.value,
-            onChange: createChainedFunction(child.props.onChange, this.handleRadioChange),
-          });
-        })}
-      </FormGroup>
-    );
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    React.useEffect(() => {
+      if (isControlled !== (valueProp != null)) {
+        console.error(
+          [
+            `Material-UI: A component is changing ${
+              isControlled ? 'a ' : 'an un'
+            }controlled RadioGroup to be ${isControlled ? 'un' : ''}controlled.`,
+            'Elements should not switch from uncontrolled to controlled (or vice versa).',
+            'Decide between using a controlled or uncontrolled RadioGroup ' +
+              'element for the lifetime of the component.',
+            'More info: https://fb.me/react-controlled-components',
+          ].join('\n'),
+        );
+      }
+    }, [valueProp, isControlled]);
   }
-}
+
+  const value = isControlled ? valueProp : valueState;
+
+  const handleChange = event => {
+    if (!isControlled) {
+      setValue(event.target.value);
+    }
+
+    if (onChange) {
+      onChange(event, event.target.value);
+    }
+  };
+  const context = { name, onChange: handleChange, value };
+
+  const handleRef = useForkRef(ref, rootRef);
+
+  return (
+    <FormGroup role="radiogroup" ref={handleRef} {...other}>
+      <RadioGroupContext.Provider value={context}>{children}</RadioGroupContext.Provider>
+    </FormGroup>
+  );
+});
 
 RadioGroup.propTypes = {
+  /**
+   * @ignore
+   */
+  actions: PropTypes.shape({ current: PropTypes.object }),
   /**
    * The content of the component.
    */
   children: PropTypes.node,
+  /**
+   * The default `input` element value. Use when the component is not controlled.
+   */
+  defaultValue: PropTypes.any,
   /**
    * The name used to reference the value of the control.
    */
@@ -89,8 +96,7 @@ RadioGroup.propTypes = {
    * Callback fired when a radio button is selected.
    *
    * @param {object} event The event source of the callback.
-   * You can pull out the new value by accessing `event.target.value`.
-   * @param {string} value The `value` of the selected radio button
+   * You can pull out the new value by accessing `event.target.value` (string).
    */
   onChange: PropTypes.func,
   /**
@@ -98,9 +104,9 @@ RadioGroup.propTypes = {
    */
   onKeyDown: PropTypes.func,
   /**
-   * Value of the selected radio button.
+   * Value of the selected radio button. The DOM API casts this to a string.
    */
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
+  value: PropTypes.any,
 };
 
 export default RadioGroup;

@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
-import warning from 'warning';
+import clsx from 'clsx';
 import withStyles from '../styles/withStyles';
 
 export const styles = {
@@ -11,12 +10,6 @@ export const styles = {
   horizontal: {
     paddingLeft: 8,
     paddingRight: 8,
-    '&:first-child': {
-      paddingLeft: 0,
-    },
-    '&:last-child': {
-      paddingRight: 0,
-    },
   },
   /* Styles applied to the root element if `orientation="vertical"`. */
   vertical: {},
@@ -25,38 +18,40 @@ export const styles = {
     flex: 1,
     position: 'relative',
   },
-  /* Styles applied to the root element if `completed={true}`. */
+  /* Pseudo-class applied to the root element if `completed={true}`. */
   completed: {},
 };
 
-function Step(props) {
+const Step = React.forwardRef(function Step(props, ref) {
   const {
-    active,
+    active = false,
     alternativeLabel,
     children,
     classes,
-    className: classNameProp,
-    completed,
+    className,
+    completed = false,
     connector,
-    disabled,
+    disabled = false,
     index,
     last,
     orientation,
     ...other
   } = props;
 
-  const className = classNames(
-    classes.root,
-    classes[orientation],
-    {
-      [classes.alternativeLabel]: alternativeLabel,
-      [classes.completed]: completed,
-    },
-    classNameProp,
-  );
-
   return (
-    <div className={className} {...other}>
+    <div
+      className={clsx(
+        classes.root,
+        classes[orientation],
+        {
+          [classes.alternativeLabel]: alternativeLabel,
+          [classes.completed]: completed,
+        },
+        className,
+      )}
+      ref={ref}
+      {...other}
+    >
       {connector &&
         alternativeLabel &&
         index !== 0 &&
@@ -73,13 +68,16 @@ function Step(props) {
           return null;
         }
 
-        warning(
-          child.type !== React.Fragment,
-          [
-            "Material-UI: the Step component doesn't accept a Fragment as a child.",
-            'Consider providing an array instead.',
-          ].join('\n'),
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          if (child.type === React.Fragment) {
+            console.error(
+              [
+                "Material-UI: the Step component doesn't accept a Fragment as a child.",
+                'Consider providing an array instead.',
+              ].join('\n'),
+            );
+          }
+        }
 
         return React.cloneElement(child, {
           active,
@@ -94,7 +92,7 @@ function Step(props) {
       })}
     </div>
   );
-}
+});
 
 Step.propTypes = {
   /**
@@ -112,7 +110,7 @@ Step.propTypes = {
   children: PropTypes.node,
   /**
    * Override or extend the styles applied to the component.
-   * See [CSS API](#css-api) below for more details.
+   * See [CSS API](#css) below for more details.
    */
   classes: PropTypes.object.isRequired,
   /**
@@ -146,12 +144,6 @@ Step.propTypes = {
    * @ignore
    */
   orientation: PropTypes.oneOf(['horizontal', 'vertical']),
-};
-
-Step.defaultProps = {
-  active: false,
-  completed: false,
-  disabled: false,
 };
 
 export default withStyles(styles, { name: 'MuiStep' })(Step);

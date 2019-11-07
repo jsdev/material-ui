@@ -1,16 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import warning from 'warning';
-import { keys as breakpointKeys } from '../styles/createBreakpoints';
-import { capitalize } from '../utils/helpers';
+import capitalize from '../utils/capitalize';
 import withStyles from '../styles/withStyles';
+import useTheme from '../styles/useTheme';
 
 const styles = theme => {
   const hidden = {
     display: 'none',
   };
 
-  return breakpointKeys.reduce((acc, key) => {
+  return theme.breakpoints.keys.reduce((acc, key) => {
     acc[`only${capitalize(key)}`] = {
       [theme.breakpoints.only(key)]: hidden,
     };
@@ -46,42 +45,48 @@ function HiddenCss(props) {
     xsUp,
     ...other
   } = props;
+  const theme = useTheme();
 
-  warning(
-    Object.keys(other).length === 0 ||
-      (Object.keys(other).length === 1 && other.hasOwnProperty('ref')),
-    `Material-UI: unsupported properties received ${Object.keys(other).join(
-      ', ',
-    )} by \`<Hidden />\`.`,
-  );
-
-  const classNames = [];
-
-  if (className) {
-    classNames.push(className);
+  if (process.env.NODE_ENV !== 'production') {
+    if (
+      Object.keys(other).length !== 0 &&
+      !(Object.keys(other).length === 1 && other.hasOwnProperty('ref'))
+    ) {
+      console.error(
+        `Material-UI: unsupported props received ${Object.keys(other).join(
+          ', ',
+        )} by \`<Hidden />\`.`,
+      );
+    }
   }
 
-  for (let i = 0; i < breakpointKeys.length; i += 1) {
-    const breakpoint = breakpointKeys[i];
+  const clsx = [];
+
+  if (className) {
+    clsx.push(className);
+  }
+
+  for (let i = 0; i < theme.breakpoints.keys.length; i += 1) {
+    const breakpoint = theme.breakpoints.keys[i];
     const breakpointUp = props[`${breakpoint}Up`];
     const breakpointDown = props[`${breakpoint}Down`];
 
     if (breakpointUp) {
-      classNames.push(classes[`${breakpoint}Up`]);
+      clsx.push(classes[`${breakpoint}Up`]);
     }
     if (breakpointDown) {
-      classNames.push(classes[`${breakpoint}Down`]);
+      clsx.push(classes[`${breakpoint}Down`]);
     }
   }
 
   if (only) {
     const onlyBreakpoints = Array.isArray(only) ? only : [only];
     onlyBreakpoints.forEach(breakpoint => {
-      classNames.push(classes[`only${capitalize(breakpoint)}`]);
+      clsx.push(classes[`only${capitalize(breakpoint)}`]);
     });
   }
 
-  return <div className={classNames.join(' ')}>{children}</div>;
+  return <div className={clsx.join(' ')}>{children}</div>;
 }
 
 HiddenCss.propTypes = {
@@ -91,7 +96,7 @@ HiddenCss.propTypes = {
   children: PropTypes.node,
   /**
    * Override or extend the styles applied to the component.
-   * See [CSS API](#css-api) below for more details.
+   * See [CSS API](#css) below for more details.
    */
   classes: PropTypes.object.isRequired,
   /**
@@ -99,8 +104,8 @@ HiddenCss.propTypes = {
    */
   className: PropTypes.string,
   /**
-   * Specify which implementation to use.  'js' is the default, 'css' works better for server
-   * side rendering.
+   * Specify which implementation to use.  'js' is the default, 'css' works better for
+   * server-side rendering.
    */
   implementation: PropTypes.oneOf(['js', 'css']),
   /**
@@ -152,4 +157,4 @@ HiddenCss.propTypes = {
   xsUp: PropTypes.bool,
 };
 
-export default withStyles(styles, { name: 'MuiPrivateHiddenCss' })(HiddenCss);
+export default withStyles(styles, { name: 'PrivateHiddenCss' })(HiddenCss);

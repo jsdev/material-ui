@@ -6,7 +6,14 @@ export {
   createMuiTheme,
   createStyles,
   jssPreset,
+  makeStyles,
   MuiThemeProvider,
+  responsiveFontSizes,
+  ServerStyleSheets,
+  styled,
+  StylesProvider,
+  ThemeProvider,
+  useTheme,
   withStyles,
   withTheme,
 } from './styles';
@@ -17,8 +24,11 @@ export { default as Backdrop } from './Backdrop';
 export { default as Badge } from './Badge';
 export { default as BottomNavigation } from './BottomNavigation';
 export { default as BottomNavigationAction } from './BottomNavigationAction';
+export { default as Box } from './Box';
+export { default as Breadcrumbs } from './Breadcrumbs';
 export { default as Button } from './Button';
 export { default as ButtonBase } from './ButtonBase';
+export { default as ButtonGroup } from './ButtonGroup';
 export { default as Card } from './Card';
 export { default as CardActionArea } from './CardActionArea';
 export { default as CardActions } from './CardActions';
@@ -30,6 +40,7 @@ export { default as Chip } from './Chip';
 export { default as CircularProgress } from './CircularProgress';
 export { default as ClickAwayListener } from './ClickAwayListener';
 export { default as Collapse } from './Collapse';
+export { default as Container } from './Container';
 export { default as CssBaseline } from './CssBaseline';
 export { default as Dialog } from './Dialog';
 export { default as DialogActions } from './DialogActions';
@@ -63,6 +74,7 @@ export { default as InputAdornment } from './InputAdornment';
 export { default as InputBase } from './InputBase';
 export { default as InputLabel } from './InputLabel';
 export { default as LinearProgress } from './LinearProgress';
+export { default as Link } from './Link';
 export { default as List } from './List';
 export { default as ListItem } from './ListItem';
 export { default as ListItemAvatar } from './ListItemAvatar';
@@ -87,6 +99,7 @@ export { default as RadioGroup } from './RadioGroup';
 export { default as RootRef } from './RootRef';
 export { default as Select } from './Select';
 export { default as Slide } from './Slide';
+export { default as Slider } from './Slider';
 export { default as Snackbar } from './Snackbar';
 export { default as SnackbarContent } from './SnackbarContent';
 export { default as Step } from './Step';
@@ -110,9 +123,12 @@ export { default as TableRow } from './TableRow';
 export { default as TableSortLabel } from './TableSortLabel';
 export { default as Tabs } from './Tabs';
 export { default as TextField } from './TextField';
+export { default as TextareaAutosize } from './TextareaAutosize';
 export { default as Toolbar } from './Toolbar';
 export { default as Tooltip } from './Tooltip';
 export { default as Typography } from './Typography';
+export { default as useMediaQuery } from './useMediaQuery';
+export { default as useScrollTrigger } from './useScrollTrigger';
 export { default as withMobileDialog } from './withMobileDialog';
 export { default as withWidth } from './withWidth';
 export { default as Zoom } from './Zoom';
